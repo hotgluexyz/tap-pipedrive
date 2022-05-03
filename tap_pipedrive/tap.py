@@ -321,6 +321,8 @@ class PipedriveTap(object):
             self.config["expires_in"] = expires_in
 
         return access_token
+
+
     @backoff.on_exception(backoff.expo, (PipedriveInternalServiceError, simplejson.scanner.JSONDecodeError), max_tries = 3)
     @backoff.on_exception(retry_after_wait_gen, PipedriveTooManyRequestsInSecondError, giveup=is_not_status_code_fn([429]), jitter=None, max_tries=3)
     def execute_request(self, endpoint, params=None):
@@ -334,7 +336,7 @@ class PipedriveTap(object):
         }
         if params:
             _params.update(params)
-        BASE_URL = self.config.get("base_url")
+        BASE_URL = f"https://{self.config['account']}.pipedrive.com/api/v1"
         url = "{}/{}".format(BASE_URL, endpoint)
         logger.debug('Firing request at {} with params: {}'.format(url, _params))
         response = requests.get(url, headers=headers, params=_params)
