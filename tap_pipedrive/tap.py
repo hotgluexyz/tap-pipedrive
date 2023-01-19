@@ -15,7 +15,7 @@ from singer.catalog import Catalog, CatalogEntry, Schema
 from tap_pipedrive.exceptions import (PipedriveError, PipedriveNotFoundError, PipedriveBadRequestError, PipedriveUnauthorizedError, PipedrivePaymentRequiredError, 
                         PipedriveForbiddenError, PipedriveGoneError, PipedriveUnsupportedMediaError, PipedriveUnprocessableEntityError, PipedriveTooManyRequestsError, 
                         PipedriveTooManyRequestsInSecondError,PipedriveInternalServiceError, PipedriveNotImplementedError, PipedriveServiceUnavailableError)
-from .streams import (CurrenciesStream, ActivityTypesStream, FiltersStream, StagesStream, PipelinesStream,
+from tap_pipedrive.streams import (CurrenciesStream, ActivityTypesStream, FiltersStream, StagesStream, PipelinesStream,
                       RecentNotesStream, RecentUsersStream, RecentActivitiesStream, RecentDealsStream,
                       RecentFilesStream, RecentOrganizationsStream, RecentPersonsStream, RecentProductsStream,
                       DealStageChangeStream, DealsProductsStream)
@@ -126,7 +126,11 @@ class PipedriveTap(object):
         for stream in self.streams:
             stream.tap = self
 
-            schema = Schema.from_dict(stream.get_schema())
+            try:
+                schema = Schema.from_dict(stream.get_schema())
+            except PipedriveForbiddenError:
+                logger.warning(f"Stream '{stream.get_name()}' ignored because it is not in the scopes.")
+                continue
             key_properties = stream.key_properties
 
             meta = metadata.get_standard_metadata(
