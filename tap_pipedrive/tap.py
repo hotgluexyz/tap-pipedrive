@@ -143,7 +143,10 @@ class PipedriveTap(object):
             # If the stream has a state_field, it needs to mark that property with automatic metadata
             if stream.state_field:
                 meta = metadata.to_map(meta)
-                meta[('properties', stream.state_field)]['inclusion'] = 'automatic'
+                if meta.get(('properties', stream.state_field)) :
+                    meta[('properties', stream.state_field)]['inclusion'] = 'automatic'
+                else:
+                    logger.warn(f"State can't be set for {stream.schema}")
                 meta = metadata.to_list(meta)
 
             catalog.streams.append(CatalogEntry(

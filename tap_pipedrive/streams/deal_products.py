@@ -5,8 +5,9 @@ class DealsProductsStream(PipedriveIterStream):
     base_endpoint = 'deals'
     id_endpoint = 'deals/{}/products'
     schema = 'deal_products'
-    state_field = None
     key_properties = ['id']
+    replication_method = 'INCREMENTAL'
+    state_field = 'add_time'
 
     def get_name(self):
         return self.schema
