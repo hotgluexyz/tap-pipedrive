@@ -318,8 +318,11 @@ class PipedriveTap(object):
                 "Accept": "application/json",
                 "Content-Type": "application/x-www-form-urlencoded"
             }
-            response = requests.post(url, headers=headers, data=payload).json()
-
+            response = requests.post(url, headers=headers, data=payload)
+            if response.status_code > 399 and response.status_code < 500:
+                raise Exception(f"Status code: {response.status_code} - {response.json()['message']}")
+            
+            response = response.json()
             access_token = response["access_token"]
             expires_in = now + response["expires_in"]
             refresh_token = response.get("refresh_token")
