@@ -122,6 +122,7 @@ class PipedriveStream(object):
 
         # newer or equal
         current_state = pendulum.parse(self.get_row_state(row))
+        current_state = current_state.subtract(seconds=1)
         if current_state >= self.initial_state:
             return True
 
