@@ -5,7 +5,7 @@ class DealStageChangeStream(PipedriveIterStream):
     base_endpoint = 'deals'
     id_endpoint = 'deals/{}/flow'
     schema = 'dealflow'
-    state_field = 'log_time'
+    state_field = 'add_time'
     key_properties = ['id']
     replication_method = 'INCREMENTAL'
 
