@@ -13,7 +13,23 @@ class DynamicTypingRecentsStream(RecentsStream):
     fields_more_items_in_collection = True
     fields_start = 0
     fields_limit = 100
+    schema_mapping = {}
 
+    def clean_string(self,string):
+        return string.replace(" ", "_").replace("-", "_").replace("/", "_").replace("(", "").replace(")", "").replace(".", "").replace(",", "").replace(":", "").replace(";", "").replace("&", "and").replace("'", "").replace('"', "").lower()
+    def get_fields_response(self,limit,start):
+        fields_params = {"limit" : limit, "start" : start} 
+        try:
+            fields_response = self.tap.execute_request(endpoint=self.fields_endpoint, params=fields_params)
+        except (ConnectionError, RequestException) as e:
+            raise e
+        return fields_response
+    def get_schema_mapping(self):
+        if self.schema_mapping:
+            return self.schema_mapping
+        else:
+            self.get_schema()
+            return self.schema_mapping
 
     def get_schema(self):
         if not self.schema_cache:
@@ -21,24 +37,24 @@ class DynamicTypingRecentsStream(RecentsStream):
 
             while self.fields_more_items_in_collection:
 
-                fields_params = {"limit" : self.fields_limit, "start" : self.fields_start} 
-
-                try:
-                    fields_response = self.tap.execute_request(endpoint=self.fields_endpoint, params=fields_params)
-                except (ConnectionError, RequestException) as e:
-                    raise e
-
+                fields_response = self.get_fields_response(self.fields_limit,self.fields_start)
                 try:
                     payload = fields_response.json() # Verifying response in execute_request
 
                     for property in payload['data']:
-                        if property['key'] not in self.static_fields:
-                            logger.debug(property['key'], property['field_type'], property['mandatory_flag'])
+                        key = f"{property['key']}"
+                        if property.get("edit_flag",False):
+                            key = self.clean_string(property['name'])
+                            if property.get("is_subfield"):
+                                key = self.clean_string(property['name'])
+                            self.schema_mapping[property['key']] = key
+                        if key not in self.static_fields:
+                            logger.debug(key, property['field_type'], property['mandatory_flag'])
 
-                            if property['key'] in schema['properties']:
+                            if key in schema['properties']:
                                 logger.warn('Dynamic property "{}" overrides with type {} existing entry in ' \
                                             'static JSON schema of {} stream.'.format(
-                                                property['key'],
+                                                key,
                                                 property['field_type'],
                                                 self.schema
                                             )
@@ -64,7 +80,7 @@ class DynamicTypingRecentsStream(RecentsStream):
                             # mandatory for another amount of time
                             property_content['type'].append('null')
 
-                            schema['properties'][property['key']] = property_content
+                            schema['properties'][key] = property_content
 
                     # Check for more data is available in next page
                     if 'additional_data' in payload and 'pagination' in payload['additional_data']:

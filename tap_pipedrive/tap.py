@@ -268,15 +268,19 @@ class PipedriveTap(object):
             self.validate_response(response)
             self.rate_throttling(response)
             stream.paginate(response)
+            schema_mapping = stream.get_schema_mapping()
 
             # records with metrics
             with singer.metrics.record_counter(stream.schema) as counter:
                 with singer.Transformer(singer.NO_INTEGER_DATETIME_PARSING) as optimus_prime:
                     for row in self.iterate_response(response):
                         row = stream.process_row(row)
-
                         if not row: # in case of a non-empty response with an empty element
                             continue
+                        row_keys = list(row.keys())
+                        for row_key in row_keys:
+                            if row_key in schema_mapping:
+                                row[schema_mapping[row_key]] = row.pop(row_key)
                         row = optimus_prime.transform(row, stream.get_schema(), stream_metadata)
                         if stream.write_record(row):
                             counter.increment()
