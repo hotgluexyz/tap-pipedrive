@@ -19,7 +19,7 @@ from tap_pipedrive.streams import (CurrenciesStream, ActivityTypesStream, Filter
                       RecentNotesStream, RecentUsersStream, RecentActivitiesStream, RecentDealsStream,
                       RecentFilesStream, RecentOrganizationsStream, RecentPersonsStream, RecentProductsStream,
                       DealStageChangeStream, DealsProductsStream)
-
+from tap_pipedrive.streams.recents.dynamic_typing import DynamicTypingRecentsStream
 
 logger = singer.get_logger()
 
@@ -268,7 +268,12 @@ class PipedriveTap(object):
             self.validate_response(response)
             self.rate_throttling(response)
             stream.paginate(response)
-            schema_mapping = stream.get_schema_mapping()
+
+            # only dynamic type streams have get_schema_mapping()
+            if isinstance(stream, DynamicTypingRecentsStream):
+                schema_mapping = stream.get_schema_mapping()
+            else:
+                schema_mapping = stream.get_schema()
 
             # records with metrics
             with singer.metrics.record_counter(stream.schema) as counter:
