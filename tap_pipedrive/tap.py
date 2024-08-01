@@ -278,7 +278,15 @@ class PipedriveTap(object):
             # records with metrics
             with singer.metrics.record_counter(stream.schema) as counter:
                 with singer.Transformer(singer.NO_INTEGER_DATETIME_PARSING) as optimus_prime:
+                    stream_name = stream.get_name()
                     for row in self.iterate_response(response):
+                        # logic to avoid duplicates HGI-6285
+                        if row["id"] not in stream.ids:
+                            stream.ids.append(row["id"])
+                        else:
+                            logger.info(f"id '{row['id']}' was previously fetched and processed for {stream_name}, skipping duplicate value...")
+                            continue
+
                         row = stream.process_row(row)
                         if not row: # in case of a non-empty response with an empty element
                             continue

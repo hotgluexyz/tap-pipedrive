@@ -7,6 +7,9 @@ logger = singer.get_logger()
 
 
 class PipedriveStream(object):
+    def __init__(self):
+        self.ids = []
+
     tap = None
     endpoint = ''
     key_properties = []
