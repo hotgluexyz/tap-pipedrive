@@ -65,7 +65,8 @@
       "type": ["integer", "null"]
     },
     "last_activity_date": {
-      "type": ["null", "string"]
+      "type": ["null", "string"],
+      "format": "date-time"
     },
     "lost_reason": {
       "type": ["null", "string"]
@@ -128,7 +129,8 @@
       "type": ["null", "integer"]
     },
     "expected_close_date": {
-      "type": ["null", "string"]
+      "type": ["null", "string"],
+      "format": "date-time"
     },
     "last_incoming_mail_time": {
       "type": ["null", "string"],

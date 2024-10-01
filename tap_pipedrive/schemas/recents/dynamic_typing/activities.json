@@ -23,7 +23,8 @@
       "type": ["null", "integer"]
     },
     "due_date": {
-      "type": ["null", "string"]
+      "type": ["null", "string"],
+      "format": "date-time"      
     },
     "due_time": {
       "type": ["null", "string"]
