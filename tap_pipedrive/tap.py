@@ -118,10 +118,11 @@ class PipedriveTap(object):
         self.config['start_date'] = pendulum.parse(self.config['start_date'])
         self.state = state
 
-    def do_discover(self):
+    def do_discover(self, return_dict=False):
         logger.info('Starting discover')
 
         catalog = Catalog([])
+        catalog_stream_meta_dict = {}
 
         for stream in self.streams:
             stream.tap = self
@@ -156,7 +157,41 @@ class PipedriveTap(object):
                 schema=schema,
                 metadata=meta
             ))
-
+            catalog_stream_meta_dict[stream.schema] = meta
+        if return_dict:
+            cd = catalog.to_dict()
+            for catalog_stream in cd.get('streams', []):
+                data = []
+                catalog_stream['stream_meta'] = catalog_stream_meta_dict[catalog_stream['stream']]
+                try:
+                    stream = next(filter(lambda stream: stream.schema == catalog_stream['stream'], self.streams))
+                    if getattr(stream, 'metadata_endpoint', None):
+                        response = self.execute_request(stream.metadata_endpoint)
+                        res_json = response.json()
+                        if 'data' in res_json:
+                            data = res_json['data']
+                            is_more_pages = res_json.get('additional_data', {}).get('pagination', {}).get('more_items_in_collection', False)
+                            start = 0
+                            while is_more_pages:
+                                start += 500
+                                response = self.execute_request(stream.metadata_endpoint, {'start': start})
+                                res_json = response.json()
+                                data += res_json['data']
+                                is_more_pages = res_json.get('additional_data', {}).get('pagination', {}).get('more_items_in_collection', False)
+                except Exception as exc:
+                    logger.warning(f'Failed to find matched catalog. catalog_stream={catalog_stream} and stream={stream}. Error: {exc}')
+                schema = Schema.from_dict(stream.get_schema())
+                for field_key in schema.properties.keys():
+                    catalog_stream['schema']['properties'][field_key] = {'field_meta': {}}
+                    if data:
+                        try:
+                            field_metadata = list(filter(lambda item: item['key'] == field_key, data))
+                            if field_metadata:
+                                field_metadata['label'] = field_metadata['name']
+                                catalog_stream['schema']['properties'][field_key]['field_meta'] = field_metadata[0]
+                        except Exception as exc:
+                            logger.warning(f'Failed to find the field={field_key} in data. Error: {exc}')
+            return cd
         return catalog
 
     def do_sync(self, catalog):
