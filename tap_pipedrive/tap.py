@@ -182,13 +182,14 @@ class PipedriveTap(object):
                     logger.warning(f'Failed to find matched catalog. catalog_stream={catalog_stream} and stream={stream}. Error: {exc}')
                 schema = Schema.from_dict(stream.get_schema())
                 for field_key in schema.properties.keys():
-                    catalog_stream['schema']['properties'][field_key] = {'field_meta': {}}
+                    catalog_stream['schema']['properties'][field_key]['field_meta'] = {}
                     if data:
                         try:
                             field_metadata = list(filter(lambda item: item['key'] == field_key, data))
                             if field_metadata:
+                                field_metadata = field_metadata[0]
                                 field_metadata['label'] = field_metadata['name']
-                                catalog_stream['schema']['properties'][field_key]['field_meta'] = field_metadata[0]
+                                catalog_stream['schema']['properties'][field_key]['field_meta'] = field_metadata
                         except Exception as exc:
                             logger.warning(f'Failed to find the field={field_key} in data. Error: {exc}')
             return cd
