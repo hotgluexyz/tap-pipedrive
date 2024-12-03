@@ -386,7 +386,7 @@ class PipedriveTap(object):
         return access_token
 
 
-    @backoff.on_exception(backoff.expo, (PipedriveInternalServiceError, simplejson.scanner.JSONDecodeError), max_tries = 3)
+    @backoff.on_exception(backoff.expo, (PipedriveInternalServiceError, simplejson.scanner.JSONDecodeError, ConnectionError), max_tries = 5)
     @backoff.on_exception(retry_after_wait_gen, PipedriveTooManyRequestsInSecondError, giveup=is_not_status_code_fn([429]), jitter=None, max_tries=3)
     def execute_request(self, endpoint, params=None):
         access_token = self.get_token()
