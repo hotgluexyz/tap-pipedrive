@@ -317,10 +317,13 @@ class PipedriveTap(object):
                     stream_name = stream.get_name()
                     for row in self.iterate_response(response):
                         # logic to avoid duplicates HGI-6285
-                        if row["id"] not in stream.ids:
-                            stream.ids.append(row["id"])
+                        fetched_id = row.get("id") if row.get("id") is not None else row.get("data", {}).get("id")
+                        if fetched_id not in stream.ids:
+                            stream.ids.append(fetched_id)
+                        elif not fetched_id:
+                            logger.info(f"Got id none for '{row}' in {stream_name}, skipping None value...")
                         else:
-                            logger.info(f"id '{row['id']}' was previously fetched and processed for {stream_name}, skipping duplicate value...")
+                            logger.info(f"id '{fetched_id}' was previously fetched and processed for {stream_name}, skipping duplicate value...")
                             continue
 
                         row = stream.process_row(row)

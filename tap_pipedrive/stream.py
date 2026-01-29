@@ -74,7 +74,7 @@ class PipedriveStream(object):
     def paginate(self, response):
         payload = response.json()
 
-        if 'additional_data' in payload and 'pagination' in payload['additional_data']:
+        if 'additional_data' in payload and payload['additional_data'] is not None and'pagination' in payload['additional_data']:
             logger.debug('Paginate: valid response')
             pagination = payload['additional_data']['pagination']
             if 'more_items_in_collection' in pagination:
@@ -180,7 +180,7 @@ class PipedriveIterStream(PipedriveStream):
         added_ids = [data[i]['id']
                      for i in range(len(data))
                      if (data[i]['add_time'] is not None
-                         and start <= pendulum.parse(data[i]['add_time']) < stop)]
+                         and start <= pendulum.parse(data[i]['add_time']) < stop)] if data is not None else []
 
         # find all deals that a) had a stage change at any time (i.e., the stage_change_time is not None),
         #                     b) had a stage change after the start time and before the stop time, and
@@ -189,5 +189,5 @@ class PipedriveIterStream(PipedriveStream):
                        for i in range(len(data))
                        if (data[i]['id'] not in added_ids)
                        and (data[i]['stage_change_time'] is not None
-                            and start <= pendulum.parse(data[i]['stage_change_time']) < stop)]
+                            and start <= pendulum.parse(data[i]['stage_change_time']) < stop)] if data is not None else []
         return added_ids + changed_ids

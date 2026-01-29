@@ -15,3 +15,6 @@ class DealStageChangeStream(PipedriveIterStream):
 
     def update_endpoint(self, deal_id):
         self.endpoint = self.id_endpoint.format(deal_id)
+
+    def process_row(self, row):
+        return row['data']
