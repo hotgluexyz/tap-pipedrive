@@ -321,7 +321,7 @@ class PipedriveTap(object):
                         if fetched_id not in stream.ids:
                             stream.ids.append(fetched_id)
                         elif not fetched_id:
-                            logger.info(f"Got id none for '{row}' in {stream_name}, skipping None value...")
+                            logger.info(f"Got id None for '{row}' in {stream_name}, skipping value...")
                         else:
                             logger.info(f"id '{fetched_id}' was previously fetched and processed for {stream_name}, skipping duplicate value...")
                             continue
