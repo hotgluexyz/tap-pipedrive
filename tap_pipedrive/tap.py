@@ -316,12 +316,14 @@ class PipedriveTap(object):
                 with singer.Transformer(singer.NO_INTEGER_DATETIME_PARSING) as optimus_prime:
                     stream_name = stream.get_name()
                     for row in self.iterate_response(response):
-                        # logic to avoid duplicates HGI-6285
+
+                        # logic to avoid duplicates
                         fetched_id = None
-                        if row.get("id", {}) is not None:
+                        if row.get("id") is not None:
                             fetched_id = row.get("id")
-                        elif row.get("data") is not None:
+                        elif row.get("data", {}).get("id")is not None:
                             fetched_id = row.get("data", {}).get("id")
+                        
                         if fetched_id not in stream.ids:
                             stream.ids.append(fetched_id)
                         elif not fetched_id:
