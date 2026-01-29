@@ -324,7 +324,7 @@ class PipedriveTap(object):
                         elif row.get("data", {}).get("id")is not None:
                             fetched_id = row.get("data", {}).get("id")
                         
-                        if fetched_id is not None:
+                        if fetched_id is None:
                             logger.info(f"Got id None for '{row}' in {stream_name}, skipping value...")
                             continue
                         elif fetched_id not in stream.ids:
