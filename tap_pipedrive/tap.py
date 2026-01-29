@@ -316,11 +316,21 @@ class PipedriveTap(object):
                 with singer.Transformer(singer.NO_INTEGER_DATETIME_PARSING) as optimus_prime:
                     stream_name = stream.get_name()
                     for row in self.iterate_response(response):
-                        # logic to avoid duplicates HGI-6285
-                        if row["id"] not in stream.ids:
-                            stream.ids.append(row["id"])
+
+                        # logic to avoid duplicates
+                        fetched_id = None
+                        if row.get("id") is not None:
+                            fetched_id = row.get("id")
+                        elif row.get("data", {}).get("id")is not None:
+                            fetched_id = row.get("data", {}).get("id")
+                        
+                        if fetched_id is None:
+                            logger.info(f"Got id None for '{row}' in {stream_name}, skipping value...")
+                            continue
+                        elif fetched_id not in stream.ids:
+                            stream.ids.append(fetched_id)
                         else:
-                            logger.info(f"id '{row['id']}' was previously fetched and processed for {stream_name}, skipping duplicate value...")
+                            logger.info(f"id '{fetched_id}' was previously fetched and processed for {stream_name}, skipping duplicate value...")
                             continue
 
                         row = stream.process_row(row)

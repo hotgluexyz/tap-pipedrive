@@ -74,7 +74,7 @@ class PipedriveStream(object):
     def paginate(self, response):
         payload = response.json()
 
-        if 'additional_data' in payload and 'pagination' in payload['additional_data']:
+        if 'additional_data' in payload and payload['additional_data'] is not None and'pagination' in payload['additional_data']:
             logger.debug('Paginate: valid response')
             pagination = payload['additional_data']['pagination']
             if 'more_items_in_collection' in pagination:
@@ -176,6 +176,9 @@ class PipedriveIterStream(PipedriveStream):
 
     def find_deal_ids(self, data, start, stop):
 
+        if data is None:
+            return []
+            
         # find all deals that were *added* after the start time and before the stop time
         added_ids = [data[i]['id']
                      for i in range(len(data))
